@@ -13,7 +13,16 @@ const CSV_FILE = "bancodedadosfilmes.csv";
 // domínio/base das imagens
 const THUMB_BASE_URL = "https://torrentbrabo.rf.gd/thumbs/";
 
-// Manifest do addon
+// Função para normalizar títulos (evita problemas no ID)
+function normalizarTitulo(t) {
+    return t
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "") // remove acentos
+        .replace(/\s+/g, " ") // remove espaços duplos
+        .trim();
+}
+
+// Manifest
 const manifest = {
     id: "br.gamesbrabo.addon",
     version: "1.0.0",
@@ -34,61 +43,68 @@ const manifest = {
 
 let filmes = [];
 
+// Lê o CSV
 if (!fs.existsSync(CSV_FILE)) {
-    console.log("❌ Arquivo CSV não encontrado:", path.join(__dirname, CSV_FILE));
+    console.log("❌ CSV não encontrado:", path.join(__dirname, CSV_FILE));
     process.exit(1);
 }
 
 console.log("📄 Lendo CSV...");
 
-fs.createReadStream(CSV_FILE, { encoding: "utf-8" })
-  .pipe(csv())
-  .on("data", (row) => {
-      if (row.title && row.thumb && row.url) {
-          // monta URL absoluta da thumb
-          // encodeURIComponent para evitar problema com espaços, acentos, etc.
-          const thumbFile = row.thumb.trim();
-          const thumbUrl = THUMB_BASE_URL + encodeURIComponent(thumbFile);
+fs.createReadStream(CSV_FILE)
+    .pipe(csv())
+    .on("data", (row) => {
+        if (row.title && row.thumb && row.url) {
 
-          filmes.push({
-              id: "gbr-" + Buffer.from(row.title).toString("hex"),
-              name: row.title.trim(),
-              poster: thumbUrl,
-              magnet: row.url.trim()
-          });
-      }
-  })
-  .on("end", () => {
-      console.log("✔ CSV carregado com", filmes.length, "filmes.");
-  });
+            const tituloOriginal = row.title.trim();
+            const tituloNormalizado = normalizarTitulo(tituloOriginal);
 
-// manifest
-app.get("/manifest.json", (req, res) => {
-    res.json(manifest);
-});
+            const idHex = Buffer.from(tituloNormalizado).toString("hex");
 
-// catálogo
+            const thumbUrl = THUMB_BASE_URL + encodeURIComponent(row.thumb.trim());
+
+            filmes.push({
+                id: "gbr-" + idHex,
+                title: tituloOriginal,
+                title_normalizado: tituloNormalizado,
+                poster: thumbUrl,
+                magnet: row.url.trim()
+            });
+        }
+    })
+    .on("end", () => {
+        console.log("✔ CSV carregado:", filmes.length, "filmes");
+    });
+
+
+// Manifest
+app.get("/manifest.json", (req, res) => res.json(manifest));
+
+
+// Catálogo
 app.get("/catalog/:type/:id.json", (req, res) => {
     const metas = filmes.map(f => ({
         id: f.id,
         type: "movie",
-        name: f.name,
+        name: f.title,
         poster: f.poster
     }));
 
     res.json({ metas });
 });
 
-// metadata
+
+// Meta
 app.get("/meta/:type/:id.json", (req, res) => {
     const item = filmes.find(f => f.id === req.params.id);
+
     if (!item) return res.json({ meta: {} });
 
     res.json({
         meta: {
             id: item.id,
             type: "movie",
-            name: item.name,
+            name: item.title,
             poster: item.poster,
             background: item.poster,
             description: "Filme do catálogo Filmes BRabo."
@@ -96,21 +112,28 @@ app.get("/meta/:type/:id.json", (req, res) => {
     });
 });
 
-// stream
+
+// Stream (AQUI está o magnet)
 app.get("/stream/:type/:id.json", (req, res) => {
     const item = filmes.find(f => f.id === req.params.id);
-    if (!item) return res.json({ streams: [] });
+
+    if (!item) {
+        console.log("Filme não encontrado:", req.params.id);
+        return res.json({ streams: [] });
+    }
 
     res.json({
         streams: [
             {
                 title: "Magnet",
-                url: item.magnet
+                url: item.magnet,
+                behaviorHints: {
+                    bingeGroup: item.title
+                }
             }
         ]
     });
 });
 
-app.listen(PORT, () => {
-  console.log("Addon rodando na porta " + PORT);
-});
+
+app.listen(PORT, () => console.log("🔥 Addon rodando na porta " + PORT));
