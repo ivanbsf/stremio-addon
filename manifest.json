@@ -1,0 +1,24 @@
+{
+  "id": "org.TorrentsBrabo.filmes",
+  "version": "1.0.0",
+  "name": "Filmes BRabo",
+  "description": "Catálogo de filmes via magnet links",
+  "resources": [
+    "catalog",
+    "meta",
+    "stream"
+  ],
+  "types": ["movie"],
+  "idPrefixes": ["filme-"],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "filmes-brabo-catalog",
+      "name": "Filmes BRabo"
+    }
+  ],
+  "behaviorHints": {
+    "genre": ["action", "drama", "sci-fi"]
+  },
+  "icon": "https://torrentbrabo.rf.gd/img/logo01.png"
+}

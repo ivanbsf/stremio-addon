@@ -1,0 +1,19 @@
+{
+  "name": "stremio-addon-filmes-brabo",
+  "version": "1.0.0",
+  "description": "Addon Stremio para filmes a partir de magnet links",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Torrents BRabo",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
+    "express": "^4.21.2",
+    "stremio-addon-sdk": "^1.0.4"
+  },
+  "keywords": [],
+  "type": "commonjs"
+}
