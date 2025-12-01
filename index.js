@@ -115,18 +115,16 @@ app.get("/stream/:type/:id.json", (req, res) => {
         console.log("❌ Stream não encontrado para ID:", req.params.id);
         return res.json({ streams: [] });
     }
-    console.log("🎬 Servindo magnet:", item.name);
+
+    console.log("🎬 Servindo magnet para:", item.name);
+    console.log("🔗 Magnet:", item.magnet);
 
     res.json({
         streams: [
             {
                 name: "Torrent_BRabo",
                 title: item.name,
-                url: item.magnet,
-                behaviorHints: {
-                    notWebReady: true,
-                    bingeGroup: "movies"
-                }
+                url: item.magnet
             }
         ]
     });
