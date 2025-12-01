@@ -15,10 +15,10 @@
       "type": "movie",
       "id": "filmes-brabo-catalog",
       "name": "Filmes BRabo"
-    }
-  ],
+      extra: [{ name: "skip", isRequired: false }],
   "behaviorHints": {
     "genre": ["action", "drama", "sci-fi"]
   },
   "icon": "https://torrentbrabo.rf.gd/img/logo01.png"
 }
+
