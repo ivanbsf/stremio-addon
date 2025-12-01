@@ -94,17 +94,20 @@ app.get("/catalog/:type/:id.json", (req, res) => {
 });
 
 
-// Meta
+// METADATA
 app.get("/meta/:type/:id.json", (req, res) => {
     const item = filmes.find(f => f.id === req.params.id);
 
-    if (!item) return res.json({ meta: {} });
+    if (!item) {
+        console.log("❌ Meta não encontrada para ID:", req.params.id);
+        return res.json({ meta: {} });
+    }
 
     res.json({
         meta: {
             id: item.id,
             type: "movie",
-            name: item.title,
+            name: item.name,
             poster: item.poster,
             background: item.poster,
             description: "Filme do catálogo Filmes BRabo."
@@ -112,15 +115,15 @@ app.get("/meta/:type/:id.json", (req, res) => {
     });
 });
 
-
-// Stream (AQUI está o magnet)
+// STREAM
 app.get("/stream/:type/:id.json", (req, res) => {
     const item = filmes.find(f => f.id === req.params.id);
 
     if (!item) {
-        console.log("Filme não encontrado:", req.params.id);
+        console.log("❌ Stream não encontrado para ID:", req.params.id);
         return res.json({ streams: [] });
     }
+    console.log("🎬 Servindo magnet:", item.name);
 
     res.json({
         streams: [
@@ -136,8 +139,8 @@ app.get("/stream/:type/:id.json", (req, res) => {
         ]
     });
 });
-});
 
 
 app.listen(PORT, () => console.log("🔥 Addon rodando na porta " + PORT));
+
 
