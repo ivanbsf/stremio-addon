@@ -125,15 +125,19 @@ app.get("/stream/:type/:id.json", (req, res) => {
     res.json({
         streams: [
             {
-                title: "Magnet",
+                name: "Torrent_BRabo",
+                title: item.name,
                 url: item.magnet,
                 behaviorHints: {
-                    bingeGroup: item.title
+                    notWebReady: true,
+                    bingeGroup: "movies"
                 }
             }
         ]
     });
 });
+});
 
 
 app.listen(PORT, () => console.log("🔥 Addon rodando na porta " + PORT));
+
