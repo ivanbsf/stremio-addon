@@ -17,7 +17,7 @@ const PAGE_SIZE = 90; // Define o número de filmes por página
 // MANIFESTO DO ADDON
 const manifest = {
     id: "br.gamesbrabo.addon",
-    version: "1.0.4", // Versão final com todas as correções
+    version: "2.0.0", // Versão final com todas as correções
     logo: "https://torrentbrabo.rf.gd/img/logo01.png",
     name: "Filmes BRabo",
     description: "Addon que fornece filmes via magnet links",
@@ -217,3 +217,4 @@ async function iniciar() {
 }
 
 iniciar();
+
