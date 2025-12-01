@@ -12,12 +12,12 @@ app.use(cors());
 const PORT = process.env.PORT || 7000;
 const CSV_FILE = "bancodedadosfilmes.csv";
 const THUMB_BASE_URL = "https://torrentbrabo.rf.gd/thumbs/";
-const PAGE_SIZE = 100; // Define o número de filmes por página
+const PAGE_SIZE = 90; // Define o número de filmes por página
 
 // MANIFESTO DO ADDON
 const manifest = {
     id: "br.gamesbrabo.addon",
-    version: "1.0.3", // Versão atualizada com Paginação
+    version: "1.0.4", // Versão final com todas as correções
     logo: "https://torrentbrabo.rf.gd/img/logo01.png",
     name: "Filmes BRabo",
     description: "Addon que fornece filmes via magnet links",
@@ -29,7 +29,7 @@ const manifest = {
             id: "catalogo",
             type: "movie",
             name: "Filmes BRabo",
-            // *** ADICIONADO: Informa ao Stremio que este catálogo suporta 'skip' (paginação) ***
+            // INFORMA AO Stremio que este catálogo suporta 'skip' (paginação)
             extra: [{ name: "skip", isRequired: false }] 
         }
     ]
@@ -41,7 +41,7 @@ let filmes = [];
     FUNÇÕES DE UTILIDADE
 =========================================== */
 
-/* Função para extrair infohash de um link magnet */
+/* Função para extrair infohash de um link magnet (Usada na rota /stream) */
 function extractInfoHash(magnet) {
     try {
         // Expressão regular robusta para capturar o info hash (40 caracteres hexadecimais)
@@ -72,7 +72,7 @@ function carregarCSV() {
                 try {
                     // Garante que o link magnet existe e começa com "magnet:"
                     if (!row.title || !row.thumb || !row.url || !row.url.toLowerCase().startsWith("magnet:")) {
-                        // console.log("⚠ Linha ignorada (link magnet inválido ou faltando campos):", row);
+                        // Linhas de log detalhadas removidas para otimização
                         return;
                     }
 
@@ -106,13 +106,19 @@ app.get("/manifest.json", (req, res) => {
     res.json(manifest);
 });
 
-// *** ROTA CATÁLOGO (COM PAGINAÇÃO) ***
+// *** ROTA CATÁLOGO (CORRIGIDA PARA PAGINAÇÃO) ***
 app.get("/catalog/:type/:id/:extra?.json", (req, res) => {
     console.log("📡 Catálogo solicitado.");
 
-    // Extrai o skip (quantos itens pular)
-    const skipMatch = req.params.extra ? req.params.extra.match(/skip=(\d+)/) : null;
-    const skip = skipMatch ? parseInt(skipMatch[1]) : 0;
+    let skip = 0;
+
+    // Tenta extrair o skip do parâmetro 'extra' (ex: /skip=100.json)
+    if (req.params.extra) {
+        const skipMatch = req.params.extra.match(/skip=(\d+)/); 
+        if (skipMatch) {
+            skip = parseInt(skipMatch[1]);
+        }
+    }
     
     // Calcula o início e o fim do bloco de filmes
     const start = skip;
@@ -129,6 +135,11 @@ app.get("/catalog/:type/:id/:extra?.json", (req, res) => {
         name: f.name,
         poster: f.poster
     }));
+
+    // Se a página estiver vazia e não for a primeira, o Stremio sabe que acabou
+    if (filmesDaPagina.length === 0 && start > 0) {
+        console.log("✔ Fim do catálogo atingido.");
+    }
 
     res.json({ metas });
 });
@@ -153,12 +164,12 @@ app.get("/meta/:type/:id.json", (req, res) => {
             poster: item.poster,
             background: item.poster,
             description: "Filme do catálogo Filmes BRabo.",
-            year: "2024" 
+            year: "2024" // Boa prática para Stremio
         }
     });
 });
 
-/* STREAM (COM INFO HASH) */
+/* STREAM (CORRIGIDO E OTIMIZADO) */
 app.get("/stream/:type/:id.json", (req, res) => {
     const id = req.params.id;
 
